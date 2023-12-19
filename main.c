@@ -8,9 +8,8 @@
 //Estrutura que representa o cadastro de um paciente
 typedef struct paciente{
     float peso;
-    int idade;
+    int idade, codigoProcesso;
     char nome[lenstr];
-    char processo[lenstr];
 }Paciente;
 
 //Estrutura de nós para a fila encadeada
@@ -40,12 +39,22 @@ typedef struct hospital{
 
 /*
 //Função de enfilerar
-void insert(No** fila, int n){
+void insert(No** fila){
     No *novo = malloc(sizeof(No)), *aux;
 
     if(novo){
-        novo->dado = n;
+        
+        //Entrada dos dados do paciente
+        printf("Digite o nome: ");
+        scanf("%[^\n]", novo->cliente->nome)
+        printf("Digite o peso: ");
+        scanf("%f%*c", &novo->cliente->peso);
+        printf("Digite a idade: ");
+        scanf("%d%*c", &novo->cliente->idade);
+        printf("Digite o processo: ")
+        printf("%d%*c", &novo->cliente->processo);
         novo->prox = NULL;
+        
         if(*fila == NULL){
             *fila = novo;    
         }else{
@@ -75,7 +84,12 @@ No* delete(No **fila){
 }
 */
 
+void iniciaFila(No** fila){
+    *fila = NULL;
+}
+
+
+
 int main(){
-    
     return 0;
 }
