@@ -8,7 +8,8 @@
 //Estrutura que representa o cadastro de um paciente
 typedef struct paciente{
     float peso;
-    int idade, codigoProcesso;
+    //A variável processo refere-se ao código do tipo de procedimento a ser realizado pelo paciente
+    int idade, processo;
     char nome[lenstr];
 }Paciente;
 
@@ -37,22 +38,16 @@ typedef struct hospital{
     struct no* fila;
 }Hospital;
 
-/*
+
 //Função de enfilerar
 void insert(No** fila){
     No *novo = malloc(sizeof(No)), *aux;
 
-    if(novo){
+    if(novo){   //Verifica se a alocação funcionou
         
         //Entrada dos dados do paciente
-        printf("Digite o nome: ");
-        scanf("%[^\n]", novo->cliente->nome)
-        printf("Digite o peso: ");
-        scanf("%f%*c", &novo->cliente->peso);
-        printf("Digite a idade: ");
-        scanf("%d%*c", &novo->cliente->idade);
-        printf("Digite o processo: ")
-        printf("%d%*c", &novo->cliente->processo);
+        lerCadastro(&novo);
+        //Ponteiro nulo da última posição da fila
         novo->prox = NULL;
         
         if(*fila == NULL){
@@ -65,7 +60,7 @@ void insert(No** fila){
             aux->prox = novo;
         }
     }else{
-        printf("\nErro ao alocar memoria\n");
+        printf("\n---Erro ao alocar memoria---\n");
     }
 }
 
@@ -77,19 +72,77 @@ No* delete(No **fila){
         aux = *fila;
         *fila = aux->prox;
     }else{
-        printf("Fila vazia\n");
+        printf("\n---Fila vazia---\n");
     }
 
     return aux;
 }
-*/
 
+//Inicializa a fila
 void iniciaFila(No** fila){
     *fila = NULL;
 }
 
+void printaCadastro(No* cadastro){
+    printf("Nome: %s\n", cadastro->cliente.nome);
+    printf("Peso: %.2f\n", cadastro->cliente.peso);
+    printf("Idade: %d\n", cadastro->cliente.idade);
+    printf("Processo: %.2fm\n", cadastro->cliente.processo);
+}
+
+//Leitura dos dados de cadastro
+void lerCadastro(No **cadastro){
+    //Nome do paciente
+    printf("Digite o nome: ");
+    scanf("%[^\n]", (*cadastro)->cliente.nome);
+    //Peso do paciente
+    printf("Digite o peso: ");
+    scanf("%f%*c", (*cadastro)->cliente.peso);
+    //Idade do paciente
+    printf("Digite a idade: ");
+    scanf("%d%*c", (*cadastro)->cliente.idade);
+    //Código do procedimento a ser realizado pelo paciente
+    printf("Digite o processo: ");
+    scanf("%d%*c", (*cadastro)->cliente.processo);
+}
 
 
 int main(){
+    No *fila, *r;   //fila é o ponteiro de nó que aponta para o topo da fila
+    int cmd;    //r é o ponteiro de nó usada apenas para mostrar o item da fila retirado e liberar memória
+
+    iniciaFila(&fila);
+
+    do{
+        printf("Opcao: ");
+        scanf("%d", &cmd);
+
+        switch(cmd){
+            case 1:
+                printf("Adicionando a fila...\n");
+                insert(&fila);
+                break;
+
+            case 2:
+                r = delete(&fila);
+                
+                if(r){
+                    printf("Cadastro removido:\n");
+                    printaCadastro(r);
+                    //Libera memória alocada
+                    free(r);
+                }
+                break;
+
+            case 3:
+                printf("Saindo...\n");
+                break;
+
+            default:
+            printf("Opcao invalida\n");
+                break;
+        }
+    }while(cmd != 3);
+
     return 0;
 }
