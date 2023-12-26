@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 //define o tamanho dos vetores 
 #define tam 500
 //define o tamanho das strings
@@ -38,6 +39,21 @@ typedef struct hospital{
     struct no* fila;
 }Hospital;
 
+//Leitura dos dados de cadastro
+void lerCadastro(No **cadastro){
+    //Nome do paciente
+    printf("Digite o nome: ");
+    scanf("%[^\n]", (*cadastro)->cliente.nome);
+    //Peso do paciente
+    printf("Digite o peso: ");
+    scanf("%f%*c", &(*cadastro)->cliente.peso);
+    //Idade do paciente
+    printf("Digite a idade: ");
+    scanf("%d%*c", &(*cadastro)->cliente.idade);
+    //Código do procedimento a ser realizado pelo paciente
+    printf("Digite o processo: ");
+    scanf("%d%*c", &(*cadastro)->cliente.processo);
+}
 
 //Função de enfilerar
 void insert(No** fila){
@@ -87,25 +103,31 @@ void printaCadastro(No* cadastro){
     printf("Nome: %s\n", cadastro->cliente.nome);
     printf("Peso: %.2f\n", cadastro->cliente.peso);
     printf("Idade: %d\n", cadastro->cliente.idade);
-    printf("Processo: %.2fm\n", cadastro->cliente.processo);
+    printf("Processo: %d\n", cadastro->cliente.processo);
 }
 
-//Leitura dos dados de cadastro
-void lerCadastro(No **cadastro){
-    //Nome do paciente
-    printf("Digite o nome: ");
-    scanf("%[^\n]", (*cadastro)->cliente.nome);
-    //Peso do paciente
-    printf("Digite o peso: ");
-    scanf("%f%*c", (*cadastro)->cliente.peso);
-    //Idade do paciente
-    printf("Digite a idade: ");
-    scanf("%d%*c", (*cadastro)->cliente.idade);
-    //Código do procedimento a ser realizado pelo paciente
-    printf("Digite o processo: ");
-    scanf("%d%*c", (*cadastro)->cliente.processo);
+void imprimeFila(No *cadastro){
+    No* aux = cadastro; //Variável auxiliar para percorrer a fila
+
+    //Percorre a fila printando todos os cadastros
+    if(aux){
+        do{
+            printaCadastro(aux);
+            aux = aux->prox;
+        }while(aux);
+    }else{
+        printf("\n---Fila vazia---\n");
+    }
 }
 
+void painel(){
+    printf("\n\n      Sistema gestor 1.0\n");
+    printf("-----------------------------\n");
+    printf("1- Adicionar paciente a fila\n");
+    printf("2- Retirar da fila\n");
+    printf("3- Ver a fila\n");
+    printf("4- Sair do sistema\n");
+}
 
 int main(){
     No *fila, *r;   //fila é o ponteiro de nó que aponta para o topo da fila
@@ -114,8 +136,10 @@ int main(){
     iniciaFila(&fila);
 
     do{
+        painel();
         printf("Opcao: ");
         scanf("%d", &cmd);
+        getchar(); //Consumir caractere de quebra de linha;
 
         switch(cmd){
             case 1:
@@ -129,12 +153,17 @@ int main(){
                 if(r){
                     printf("Cadastro removido:\n");
                     printaCadastro(r);
+
                     //Libera memória alocada
                     free(r);
                 }
                 break;
-
             case 3:
+                printf("Imprimindo fila...\n");
+                imprimeFila(fila);
+                break;
+
+            case 4:
                 printf("Saindo...\n");
                 break;
 
@@ -142,7 +171,7 @@ int main(){
             printf("Opcao invalida\n");
                 break;
         }
-    }while(cmd != 3);
+    }while(cmd != 4);
 
     return 0;
 }
