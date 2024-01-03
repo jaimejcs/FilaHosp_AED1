@@ -99,6 +99,19 @@ void iniciaFila(No** fila){
     *fila = NULL;
 }
 
+void iniciaDeposito(Hospital** depo){
+    int i;
+    //Percorre o vetor qtd, inicializando-o
+    for(i = 0; i < tam; i++){(*depo)->estoque.qtd[i] = 0;}
+}
+
+void iniciaHospital(Hospital* hosp){
+    //Inicia o ponteiro nó da fila do hospital
+    hosp->fila = NULL;
+    //Inicia o depósito do hospital
+    iniciaDeposito(&hosp);
+}
+
 void printaCadastro(No* cadastro){
     printf("Nome: %s\n", cadastro->cliente.nome);
     printf("Peso: %.2f\n", cadastro->cliente.peso);
@@ -131,9 +144,11 @@ void painel(){
 
 int main(){
     No *fila, *r;   //fila é o ponteiro de nó que aponta para o topo da fila
+    Hospital hosp;  //estrutura que define a abstração do hospital
     int cmd;    //r é o ponteiro de nó usada apenas para mostrar o item da fila retirado e liberar memória
 
     iniciaFila(&fila);
+    iniciaHospital(&hosp);
 
     do{
         painel();
