@@ -56,24 +56,37 @@ void lerCadastro(No **cadastro){
 }
 
 //Função de enfilerar
-void insert(No** fila){
+void insert(No** fila, No** preferencial){
     No *novo = malloc(sizeof(No)), *aux;
 
     if(novo){   //Verifica se a alocação funcionou
         
         //Entrada dos dados do paciente
         lerCadastro(&novo);
+
         //Ponteiro nulo da última posição da fila
         novo->prox = NULL;
-        
-        if(*fila == NULL){
-            *fila = novo;    
-        }else{
-            aux = *fila;
-            while(aux->prox){
-                aux = aux->prox;
+
+        if(novo->cliente.idade >= 60){
+            if(*preferencial == NULL){
+                *preferencial = novo;    
+            }else{
+                aux = *preferencial;
+                while(aux->prox){
+                    aux = aux->prox;
+                }
+                aux->prox = novo;
             }
-            aux->prox = novo;
+        }else if(novo->cliente.idade < 60 && novo->cliente.idade >= 1){
+            if(*fila == NULL){
+                *fila = novo;    
+            }else{
+                aux = *fila;
+                while(aux->prox){
+                    aux = aux->prox;
+                }
+                aux->prox = novo;
+            }
         }
     }else{
         printf("\n---Erro ao alocar memoria---\n");
@@ -84,7 +97,7 @@ void insert(No** fila){
 No* delete(No **fila){
     No* aux = NULL;
 
-    if(*fila){
+    if(*fila){ // Verifica se a fila existe
         aux = *fila;
         *fila = aux->prox;
     }else{
@@ -138,33 +151,58 @@ void painel(){
     printf("-----------------------------\n");
     printf("1- Adicionar paciente a fila\n");
     printf("2- Retirar da fila\n");
-    printf("3- Ver a fila\n");
+    printf("3- Ver as filas\n");
     printf("4- Sair do sistema\n");
 }
 
 int main(){
-    No *fila, *r;   //fila é o ponteiro de nó que aponta para o topo da fila
+    No *fila, *preferencial, *r;   //fila e preferencial são os ponteiros de nó que apontam para o topo das filas
     Hospital hosp;  //estrutura que define a abstração do hospital
     int cmd;    //r é o ponteiro de nó usada apenas para mostrar o item da fila retirado e liberar memória
+    char buffer[2];
 
     iniciaFila(&fila);
+    iniciaFila(&preferencial);
     iniciaHospital(&hosp);
 
     do{
         painel();
         printf("Opcao: ");
-        scanf("%d", &cmd);
+
+        scanf("%1[^\n]", buffer);
         getchar(); //Consumir caractere de quebra de linha;
+        cmd = strtoul(buffer, NULL, 0);
+        
+        while(cmd < 1 || cmd > 4){  // Evita entradas inadequadas
+            printf("Valor invalido. Digite novamente: ");
+            scanf("%1[^\n]", buffer);
+            getchar(); //Consumir caractere de quebra de linha;
+            cmd = strtoul(buffer, NULL, 0);
+        }
 
         switch(cmd){
             case 1:
-                printf("Adicionando a fila...\n");
-                insert(&fila);
+                printf("Adicionando paciente a fila...\n");
+                insert(&fila, &preferencial);
                 break;
 
             case 2:
-                r = delete(&fila);
+                printf("Fila preferencial (P) ou normal (N): ");
+                char opc; // char para indicar de qual fila se trata
+
+                scanf("%c%*c", &opc);  // %*c ignora o \n que segue o char, deixando o buffer limpo
+
+                while(opc != 'N' && opc != 'P'){  // Evita entradas inválidas
+                    printf("Opcao invalida. Digite novamente: ");
+                    scanf("%c%*c", &opc);  // 
+                }
+
+                if(opc == 'N')
+                    r = delete(&fila);
                 
+                if(opc == 'P')
+                    r = delete(&preferencial);
+
                 if(r){
                     printf("Cadastro removido:\n");
                     printaCadastro(r);
@@ -172,10 +210,14 @@ int main(){
                     //Libera memória alocada
                     free(r);
                 }
+
                 break;
             case 3:
-                printf("Imprimindo fila...\n");
+                printf("\nImprimindo filas...\n");
+                printf("\n- Normal:\n");
                 imprimeFila(fila);
+                printf("\n- Preferencial:\n");
+                imprimeFila(preferencial);
                 break;
 
             case 4:
