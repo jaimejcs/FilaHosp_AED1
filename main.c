@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 //define o tamanho dos vetores 
 #define tam 500
 //define o tamanho das strings
@@ -22,6 +24,12 @@ typedef struct no{
     struct no *prox;
 }No;
 
+//Estrutura que define o que cada processo, ou procedimento, gasta de produto
+typedef struct processo{  
+    int id;
+    char produto[tam][lenstr];  // O primeiro índice de produto é ligado ao vetor quantidade, assim a string produto[0] tem sua
+    int quantidade[tam];        // quantidade especificada em quantidade[0] 
+}Processo;
 
 //Estrutura que representa os produtos médicos no deposito
 typedef struct deposito{
@@ -29,15 +37,61 @@ typedef struct deposito{
     int qtd[tam];
     //cada posição do vetor de produto possui a sua quantificação no vetor qtd na mesma posição de vetor
     char produto[tam][lenstr];
+    int totalItens; //especifica a quantidade de itens cadastrados
 }Deposito;
 
+//Quebra a string, separando as informações unidas com o ';'
+void quebrarString(char *entrada, char *nomeProduto, int *quantidade) {
+    // Procura o ponto e vírgula na string
+    char *pontoVirgula = strchr(entrada, ';');
 
-typedef struct hospital{
-    //Representa o deposito do hospital
-    struct deposito estoque;
-    //Ponteiro nó para a fila de pacientes
-    struct no* fila;
-}Hospital;
+    // Verifica se o ponto e vírgula foi encontrado
+    if (pontoVirgula != NULL) {
+        // Calcula o tamanho do nome do produto
+        size_t tamanhoNome = pontoVirgula - entrada;
+
+        // Copia o nome do produto para a nova string
+        strncpy(nomeProduto, entrada, tamanhoNome);
+        nomeProduto[tamanhoNome] = '\0';  // Adiciona o terminador nulo
+
+        // Converte a parte após o ponto e vírgula para um inteiro
+        *quantidade = atoi(pontoVirgula + 1);
+    } else {
+        // Em caso de erro, define o nome do produto como uma string vazia
+        nomeProduto[0] = '\0';
+
+        // Define a quantidade como zero
+        *quantidade = 0;
+    }
+}
+
+//Carrega o deposito da struct hospital com os dados do arquivo de deposito
+void carregaVet(Deposito* depo){
+    FILE *file = fopen("deposito", "rb");
+    char buffer[lenstr];
+    int cont = 0;
+
+    if(file){
+        while(fgets(buffer, lenstr, file) != NULL){
+            // Remove o caractere de nova linha da entrada, se presente
+            size_t len = strlen(buffer);
+            
+            if (len > 0 && buffer[len - 1] == '\n') {
+                buffer[len - 1] = '\0';
+            }
+
+            // Chama a função para quebrar a string
+            quebrarString(buffer, depo->produto[cont], &(depo->qtd[cont]));
+            cont++;
+        }
+        
+        depo->totalItens = cont;
+
+        fclose(file);
+    }else{
+        printf("\n-- Problema ao abrir arquivo --\n");
+    }
+}
 
 //Leitura dos dados de cadastro
 void lerCadastro(No **cadastro){
@@ -112,17 +166,12 @@ void iniciaFila(No** fila){
     *fila = NULL;
 }
 
-void iniciaDeposito(Hospital** depo){
+void iniciaDeposito(Deposito* depo){
     int i;
     //Percorre o vetor qtd, inicializando-o
-    for(i = 0; i < tam; i++){(*depo)->estoque.qtd[i] = 0;}
-}
-
-void iniciaHospital(Hospital* hosp){
-    //Inicia o ponteiro nó da fila do hospital
-    hosp->fila = NULL;
-    //Inicia o depósito do hospital
-    iniciaDeposito(&hosp);
+    for(i = 0; i < tam; i++){depo->qtd[i] = 0;}
+    //Inicializa com nenhum item cadastrado
+    depo->totalItens = 0;
 }
 
 void printaCadastro(No* cadastro){
@@ -157,13 +206,14 @@ void painel(){
 
 int main(){
     No *fila, *preferencial, *r;   //fila e preferencial são os ponteiros de nó que apontam para o topo das filas
-    Hospital hosp;  //estrutura que define a abstração do hospital
+    Deposito depo;  //estrutura que define a abstração do deposito do hospital
     int cmd;    //r é o ponteiro de nó usada apenas para mostrar o item da fila retirado e liberar memória
     char buffer[2];
 
+    //Funções inicializadoras
     iniciaFila(&fila);
     iniciaFila(&preferencial);
-    iniciaHospital(&hosp);
+    iniciaDeposito(&depo);
 
     do{
         painel();
