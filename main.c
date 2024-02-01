@@ -38,60 +38,23 @@ typedef struct deposito{
     //cada posição do vetor de produto possui a sua quantificação no vetor qtd na mesma posição de vetor
     char produto[tam][lenstr];
     int totalItens; //especifica a quantidade de itens cadastrados
+    int id[tam]; // Codigo que identifica um produto
 }Deposito;
 
-//Quebra a string, separando as informações unidas com o ';'
-void quebrarString(char *entrada, char *nomeProduto, int *quantidade) {
-    // Procura o ponto e vírgula na string
-    char *pontoVirgula = strchr(entrada, ';');
 
-    // Verifica se o ponto e vírgula foi encontrado
-    if (pontoVirgula != NULL) {
-        // Calcula o tamanho do nome do produto
-        size_t tamanhoNome = pontoVirgula - entrada;
-
-        // Copia o nome do produto para a nova string
-        strncpy(nomeProduto, entrada, tamanhoNome);
-        nomeProduto[tamanhoNome] = '\0';  // Adiciona o terminador nulo
-
-        // Converte a parte após o ponto e vírgula para um inteiro
-        *quantidade = atoi(pontoVirgula + 1);
-    } else {
-        // Em caso de erro, define o nome do produto como uma string vazia
-        nomeProduto[0] = '\0';
-
-        // Define a quantidade como zero
-        *quantidade = 0;
-    }
+//Leitura dos dados de produtos
+void lerProduto(Deposito **depo){
+    //Nome do produto
+    printf("Digite o nome do produto: ");
+    scanf("%[^\n]", (*depo)->produto[(*depo)->totalItens]);
+    //Código de identificação do produto
+    printf("Digite o ID: ");
+    scanf("%d%*c", &(*depo)->id[(*depo)->totalItens]);
+    //Quantidade do produto
+    printf("Digite a quantidade: ");
+    scanf("%d%*c", &(*depo)->qtd[(*depo)->totalItens]);
 }
 
-//Carrega o deposito da struct hospital com os dados do arquivo de deposito
-void carregaVet(Deposito* depo){
-    FILE *file = fopen("deposito", "rb");
-    char buffer[lenstr];
-    int cont = 0;
-
-    if(file){
-        while(fgets(buffer, lenstr, file) != NULL){
-            // Remove o caractere de nova linha da entrada, se presente
-            size_t len = strlen(buffer);
-            
-            if (len > 0 && buffer[len - 1] == '\n') {
-                buffer[len - 1] = '\0';
-            }
-
-            // Chama a função para quebrar a string
-            quebrarString(buffer, depo->produto[cont], &(depo->qtd[cont]));
-            cont++;
-        }
-        
-        depo->totalItens = cont;
-
-        fclose(file);
-    }else{
-        printf("\n-- Problema ao abrir arquivo --\n");
-    }
-}
 
 //Leitura dos dados de cadastro
 void lerCadastro(No **cadastro){
@@ -108,6 +71,55 @@ void lerCadastro(No **cadastro){
     printf("Digite o processo: ");
     scanf("%d%*c", &(*cadastro)->cliente.processo);
 }
+
+
+//Quebra a string, separando as informações unidas com o ';'
+void quebrarString(char *str, Deposito** depo) {
+    sscanf(str, "%d;%[^;];%d", &((*depo)->id[(*depo)->totalItens]), ((*depo)->produto[(*depo)->totalItens]), &((*depo)->qtd[(*depo)->totalItens]));
+}
+
+//Carrega o deposito da struct hospital com os dados do arquivo de deposito
+void carregaVet(Deposito* depo){
+    FILE *file = fopen("estoque.txt", "r");
+    char buffer[lenstr];
+
+    if(file){
+        while(fgets(buffer, lenstr, file) != NULL){
+            // Remove o caractere de nova linha da entrada, se presente
+            size_t len = strlen(buffer);
+            
+            if (len > 0 && buffer[len - 1] == '\n') {
+                buffer[len - 1] = '\0';
+            }
+
+            // Chama a função para quebrar a string
+            quebrarString(buffer, &depo);
+            depo->totalItens++;
+        }
+        
+    }else{
+        printf("\n-- Problema ao abrir arquivo --\n");
+    }
+
+    fclose(file);
+}
+
+
+void cadastrar(Deposito *depo){
+    FILE* file = fopen("estoque.txt", "a");
+
+    if(file){
+        lerProduto(&depo); // Entrada dos dados do produto a ser cadastrado;
+        fprintf(file, "%d;%s;%d\n", depo->id[depo->totalItens], depo->produto[depo->totalItens], depo->qtd[depo->totalItens]);
+
+        depo->totalItens++; // Atualiza a quantidade de produtos;
+    }else{
+        printf("\n-- Problema ao abrir arquivo --\n");
+    }
+
+    fclose(file);
+}
+
 
 //Função de enfilerar
 void insert(No** fila, No** preferencial){
@@ -169,9 +181,17 @@ void iniciaFila(No** fila){
 void iniciaDeposito(Deposito* depo){
     int i;
     //Percorre o vetor qtd, inicializando-o
-    for(i = 0; i < tam; i++){depo->qtd[i] = 0;}
+    for(i = 0; i < tam; i++){
+        depo->qtd[i] = 0; 
+        depo->id[i] = 0;
+    }
     //Inicializa com nenhum item cadastrado
     depo->totalItens = 0;
+}
+
+void iniciaArquivo(){  //Cria o arquivo caso não exista
+    FILE* arq = fopen("estoque.txt", "a+");
+    fclose(arq);
 }
 
 void printaCadastro(No* cadastro){
@@ -179,6 +199,16 @@ void printaCadastro(No* cadastro){
     printf("Peso: %.2f\n", cadastro->cliente.peso);
     printf("Idade: %d\n", cadastro->cliente.idade);
     printf("Processo: %d\n", cadastro->cliente.processo);
+}
+
+void imprimeEstoque(Deposito depo){
+    for(int i = 0; i < depo.totalItens; i++){
+        printf("Produto: %s\n", depo.produto[i]);
+        printf("Codigo: %d\n", depo.id[i]);
+        printf("Quantidade: %d\n", depo.qtd[i]);
+        printf("\n");
+    }
+    printf("-- Fim estoque --\n");
 }
 
 void imprimeFila(No *cadastro){
@@ -201,31 +231,37 @@ void painel(){
     printf("1- Adicionar paciente a fila\n");
     printf("2- Retirar da fila\n");
     printf("3- Ver as filas\n");
-    printf("4- Sair do sistema\n");
+    printf("4- Cadastrar novo produto\n");
+    printf("5- Ver estoque\n");
+    printf("6- Sair do sistema\n");
 }
 
 int main(){
     No *fila, *preferencial, *r;   //fila e preferencial são os ponteiros de nó que apontam para o topo das filas
     Deposito depo;  //estrutura que define a abstração do deposito do hospital
     int cmd;    //r é o ponteiro de nó usada apenas para mostrar o item da fila retirado e liberar memória
-    char buffer[2];
+    char buffer[lenstr];
 
     //Funções inicializadoras
     iniciaFila(&fila);
     iniciaFila(&preferencial);
     iniciaDeposito(&depo);
+    iniciaArquivo();
+    
+    // Carrega o vetor depo com o conteúdo dos arquivos para melhor manipulação
+    carregaVet(&depo);
 
     do{
         painel();
         printf("Opcao: ");
 
-        scanf("%1[^\n]", buffer);
+        scanf("%[^\n]", buffer);
         getchar(); //Consumir caractere de quebra de linha;
         cmd = strtoul(buffer, NULL, 0);
         
-        while(cmd < 1 || cmd > 4){  // Evita entradas inadequadas
+        while(cmd < 1 || cmd > 6){  // Evita entradas inadequadas
             printf("Valor invalido. Digite novamente: ");
-            scanf("%1[^\n]", buffer);
+            scanf("%[^\n]", buffer);
             getchar(); //Consumir caractere de quebra de linha;
             cmd = strtoul(buffer, NULL, 0);
         }
@@ -271,6 +307,16 @@ int main(){
                 break;
 
             case 4:
+                printf("\nCadastrando produto...\n");
+                cadastrar(&depo);
+                break;
+
+            case 5:
+                printf("\n-- Estoque atual --\n\n");
+                imprimeEstoque(depo);
+                break;
+
+            case 6:
                 printf("Saindo...\n");
                 break;
 
@@ -278,7 +324,7 @@ int main(){
             printf("Opcao invalida\n");
                 break;
         }
-    }while(cmd != 4);
+    }while(cmd != 6);
 
     return 0;
 }
