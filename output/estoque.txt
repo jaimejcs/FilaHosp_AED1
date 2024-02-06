@@ -1,0 +1,8 @@
+1;seringa;7
+2;gaze compressiva;800
+3;filme;45
+4;frasco;69
+5;agulha;800
+6;antibiotico;700
+7;soro;59
+8;morfina;120

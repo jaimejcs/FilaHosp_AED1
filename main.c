@@ -6,6 +6,8 @@
 #define tam 500
 //define o tamanho das strings
 #define lenstr 50
+//define a quantidade fixa de processos
+#define proc 5
 
 
 //Estrutura que representa o cadastro de um paciente
@@ -27,8 +29,9 @@ typedef struct no{
 //Estrutura que define o que cada processo, ou procedimento, gasta de produto
 typedef struct processo{  
     int id;
-    char produto[tam][lenstr];  // O primeiro índice de produto é ligado ao vetor quantidade, assim a string produto[0] tem sua
-    int quantidade[tam];        // quantidade especificada em quantidade[0] 
+    int produto[tam];  // O índice de produto é ligado ao vetor quantidade, assim id do produto[0] tem sua
+    int quantidade[tam];        // quantidade especificada em quantidade[0]
+    int totalItens; 
 }Processo;
 
 //Estrutura que representa os produtos médicos no deposito
@@ -42,14 +45,37 @@ typedef struct deposito{
 }Deposito;
 
 
+void listaProcessos(){
+    printf("\nExame de sangue (1)\n");
+    printf("Raio-x (2)\n");
+    printf("Tomografia (3)\n");
+    printf("Primeiro socorros (4)\n");
+    printf("Internacao (5)\n\n");
+}
+
+
+//Valida o id
+int validaId(Deposito** depo, int id){
+    for(int i = 0; i < (*depo)->totalItens; i++){
+        if((*depo)->id[i] == id) return 1;
+    }
+
+    return 0;
+}
+
+
 //Leitura dos dados de produtos
 void lerProduto(Deposito **depo){
+    int id;
     //Nome do produto
     printf("Digite o nome do produto: ");
     scanf("%[^\n]", (*depo)->produto[(*depo)->totalItens]);
     //Código de identificação do produto
-    printf("Digite o ID: ");
-    scanf("%d%*c", &(*depo)->id[(*depo)->totalItens]);
+    do{
+        printf("Digite o ID: ");
+        scanf("%d%*c", &id);      //Verifica se o ID é válido, gerando um loop até que seja válido
+    }while(validaId(depo, id));
+    (*depo)->id[(*depo)->totalItens] = id;
     //Quantidade do produto
     printf("Digite a quantidade: ");
     scanf("%d%*c", &(*depo)->qtd[(*depo)->totalItens]);
@@ -58,6 +84,7 @@ void lerProduto(Deposito **depo){
 
 //Leitura dos dados de cadastro
 void lerCadastro(No **cadastro){
+    int aux;
     //Nome do paciente
     printf("Digite o nome: ");
     scanf("%[^\n]", (*cadastro)->cliente.nome);
@@ -68,8 +95,13 @@ void lerCadastro(No **cadastro){
     printf("Digite a idade: ");
     scanf("%d%*c", &(*cadastro)->cliente.idade);
     //Código do procedimento a ser realizado pelo paciente
-    printf("Digite o processo: ");
-    scanf("%d%*c", &(*cadastro)->cliente.processo);
+    do{
+        printf("Digite o processo (-1 para ver a lista dos processos): ");
+        scanf("%d%*c", &aux);
+        if(aux == -1)
+            listaProcessos();
+    }while(aux < 1 || aux > 5);
+    (*cadastro)->cliente.processo = aux;
 }
 
 
@@ -194,6 +226,75 @@ void iniciaArquivo(){  //Cria o arquivo caso não exista
     fclose(arq);
 }
 
+void iniciaProcessos(Processo *processos){  //Há uma quantidade definida e fixa de processos, mas pode-se implementar uma gestão
+    for(int i = 0; i < proc; i++){          //de adicionar ou retirar processo. Por falta de tempo, não fizemos
+        processos[i].id = i+1;
+    }
+    //Processo id 1
+    processos[0].produto[0] = 1;
+    processos[0].quantidade[0] = 1;
+    processos[0].produto[1] = 4;
+    processos[0].quantidade[1] = 1;
+    processos[0].produto[2] = 5;
+    processos[0].quantidade[2] = 1;
+    processos[0].totalItens = 3; 
+
+    //Processo id 2
+    processos[1].produto[0] = 3;
+    processos[1].quantidade[0] = 1;
+    processos[1].totalItens = 1;
+
+    //Processo id 3
+    processos[2].produto[0] = 3;
+    processos[2].quantidade[0] = 1;
+    processos[2].totalItens = 1;
+
+    //Processo id 4
+    processos[3].produto[0] = 2;
+    processos[3].quantidade[0] = 2;
+    processos[3].produto[1] = 6;
+    processos[3].quantidade[1] = 1;
+    processos[3].produto[2] = 1;
+    processos[3].quantidade[2] = 1;
+    processos[3].produto[3] = 5;
+    processos[3].quantidade[3] = 1;
+    processos[3].totalItens = 4;
+
+    //Processo id 5
+    processos[4].produto[0] = 7;
+    processos[4].quantidade[0] = 1;
+    processos[4].produto[1] = 1;
+    processos[4].quantidade[1] = 1;
+    processos[4].produto[2] = 8;
+    processos[4].quantidade[2] = 1;
+    processos[4].totalItens = 3;
+}
+
+void atualizaEstoque(Deposito* depo, Processo p){
+    for(int i = 0; i < p.totalItens; i++){
+        for(int j = 0; j < depo->totalItens; j++){
+            if(p.produto[i] == depo->id[j]){
+                depo->qtd[j] -= p.quantidade[i];
+                if(depo->qtd[j] < 50){
+                    printf("Estoque de %s baixo!\n", depo->produto[j]);
+                }
+            }
+        }
+    }
+
+    FILE* file = fopen("estoque.txt", "w");
+
+    if(file){
+        for(int i = 0; i < depo->totalItens; i++){
+            fprintf(file, "%d;%s;%d\n", depo->id[i], depo->produto[i], depo->qtd[i]);
+        }
+    }else{
+        printf("\n--Erro ao atualizar o arquivo--\n");
+    }
+
+    fclose(file);
+}
+
 void printaCadastro(No* cadastro){
     printf("Nome: %s\n", cadastro->cliente.nome);
     printf("Peso: %.2f\n", cadastro->cliente.peso);
@@ -238,6 +339,7 @@ void painel(){
 
 int main(){
     No *fila, *preferencial, *r;   //fila e preferencial são os ponteiros de nó que apontam para o topo das filas
+    Processo processos[proc];
     Deposito depo;  //estrutura que define a abstração do deposito do hospital
     int cmd;    //r é o ponteiro de nó usada apenas para mostrar o item da fila retirado e liberar memória
     char buffer[lenstr];
@@ -246,6 +348,7 @@ int main(){
     iniciaFila(&fila);
     iniciaFila(&preferencial);
     iniciaDeposito(&depo);
+    iniciaProcessos(processos);
     iniciaArquivo();
     
     // Carrega o vetor depo com o conteúdo dos arquivos para melhor manipulação
@@ -290,8 +393,11 @@ int main(){
                     r = delete(&preferencial);
 
                 if(r){
-                    printf("Cadastro removido:\n");
+                    printf("\nCadastro removido:\n");
                     printaCadastro(r);
+
+                    //Atualiza estoque
+                    atualizaEstoque(&depo, processos[(r->cliente.processo) - 1]);
 
                     //Libera memória alocada
                     free(r);
