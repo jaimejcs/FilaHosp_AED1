@@ -2,9 +2,8 @@
 
 all: main
 
-main: hospital.c hospital.h main.c
-	gcc -o hospital.o hospital.c -c -W -Wall
-	gcc -o main hospital.o main.c
+main: object 
+	gcc -I include -o main obj/hospital.o main.c -W -Wall
 
-clean:
-	del /f hospital.o
+object: src/hospital.c
+	gcc -I include -c src/hospital.c -o obj/hospital.o -W -Wall
